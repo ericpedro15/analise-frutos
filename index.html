@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    <title>Análise de Frutos - Campo</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #fbbf24;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: #34d399;
+        }
+
+        .status-dot.saved {
+            background: #60a5fa;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .form-section {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        .plant-selector {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 12px;
+            align-items: center;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+
+        .separator {
+            text-align: center;
+            font-weight: bold;
+            color: #6b7280;
+            font-size: 20px;
+        }
+
+        .plants-list {
+            margin-top: 20px;
+        }
+
+        .plant-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .plant-card.collapsed {
+            border-color: #10b981;
+        }
+
+        .plant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: #f9fafb;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .plant-card.collapsed .plant-header {
+            background: #ecfdf5;
+        }
+
+        .plant-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .plant-card.collapsed .plant-title {
+            color: #10b981;
+        }
+
+        .plant-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .plant-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toggle-btn {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .toggle-btn:hover {
+            background: #4b5563;
+        }
+
+        .remove-plant-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .remove-plant-btn:hover {
+            background: #dc2626;
+        }
+
+        .plant-content {
+            padding: 16px;
+            display: none;
+        }
+
+        .plant-card.expanded .plant-content {
+            display: block;
+        }
+
+        .fruits-section {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            background: #f9fafb;
+        }
+
+        .fruit-item {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .fruit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .fruit-number {
+            font-weight: bold;
+            color: #10b981;
+            font-size: 18px;
+        }
+
+        .remove-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .remove-btn:hover {
+            background: #dc2626;
+        }
+
+        .fruit-fields {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 12px;
+        }
+
+        .add-fruit-btn {
+            width: 100%;
+            padding: 12px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 12px;
+        }
+
+        .add-fruit-btn:hover {
+            background: #059669;
+        }
+
+        .add-plant-section {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 16px;
+            background: #f9fafb;
+            margin-bottom: 20px;
+        }
+
+        .add-plant-btn {
+            width: 100%;
+            padding: 14px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-plant-btn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .submit-btn {
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .clear-btn {
+            padding: 16px;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .clear-btn:hover {
+            background: #4b5563;
+        }
+
+        .counter-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .pending-count {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            margin-top: 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #92400e;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 12px;
+            margin-top: 16px;
+            border-radius: 4px;
+            color: #065f46;
+            display: none;
+        }
+
+        .auto-save-indicator {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 12px;
+            margin-top: 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #1e40af;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .fruit-fields {
+                grid-template-columns: 1fr;
+            }
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 Análise de Frutos</h1>
+            <div class="status">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Verificando...</span>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-group">
+                <label>Data da Coleta</label>
+                <input type="date" id="dataColeta">
+            </div>
+
+            <div class="counter-badge" id="plantCounter">0 plantas adicionadas</div>
+
+            <div class="plants-list" id="plantsList">
+                <!-- Plantas serão adicionadas aqui -->
+            </div>
+
+            <div class="add-plant-section">
+                <button type="button" class="add-plant-btn" onclick="addNewPlant()">➕ Adicionar Planta</button>
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" class="submit-btn" id="submitBtn" onclick="saveAll()">💾 Salvar Tudo</button>
+                <button type="button" class="clear-btn" onclick="clearAll()">🗑️ Limpar Tudo</button>
+            </div>
+
+            <div class="auto-save-indicator" id="autoSaveIndicator">💾 Rascunho salvo automaticamente</div>
+            <div class="pending-count" id="pendingCount" style="display: none;"></div>
+            <div class="success-message" id="successMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        const STATES = [
+            'Podridão',
+            'Dano profundo',
+            'Desidratação',
+            'Virose',
+            'Dano superficial > 10%',
+            'Descoloração > 30%',
+            'Amarelecimento >= 5cm',
+            'Muito torto <= 0,85 A/B',
+            'Bom',
+            'Estragado'
+        ];
+
+        let plantCount = 0;
+        let isOnline = navigator.onLine;
+        const SHEETS_URL = 'COLE_AQUI_A_URL_DO_GOOGLE_APPS_SCRIPT';
+        let autoSaveTimeout;
+
+        // Service Worker para funcionalidade offline
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(() => {
+                console.log('Service Worker registrado');
+            });
+        }
+
+        // Atualizar status de conexão
+        function updateStatus() {
+            isOnline = navigator.onLine;
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            if (isOnline) {
+                dot.classList.remove('saved');
+                dot.classList.add('online');
+                text.textContent = 'Online - Sincronizando...';
+                syncPendingData();
+            } else {
+                dot.classList.remove('online', 'saved');
+                text.textContent = 'Offline - Salvando local';
+            }
+            
+            updatePendingCount();
+        }
+
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('dataColeta').valueAsDate = new Date();
+            loadDraft();
+            updateStatus();
+        });
+
+        // Auto-save
+        function triggerAutoSave() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                saveDraft();
+                showAutoSaveIndicator();
+            }, 2000);
+        }
+
+        function saveDraft() {
+            const draft = {
+                data: document.getElementById('dataColeta').value,
+                plants: []
+            };
+
+            const plantCards = document.querySelectorAll('.plant-card');
+            plantCards.forEach(card => {
+                const plantId = card.dataset.plantId;
+                const tValue = card.querySelector('.t-select').value;
+                const rValue = card.querySelector('.r-select').value;
+                
+                if (tValue && rValue) {
+                    const fruits = [];
+                    const fruitItems = card.querySelectorAll('.fruit-item');
+                    
+                    fruitItems.forEach(item => {
+                        const massa = item.querySelector('[data-type="massa"]').value;
+                        const estado = item.querySelector('[data-type="estado"]').value;
+                        if (massa || estado) {
+                            fruits.push({ massa, estado });
+                        }
+                    });
+
+                    draft.plants.push({
+                        id: plantId,
+                        t: tValue,
+                        r: rValue,
+                        fruits: fruits
+                    });
+                }
+            });
+
+            localStorage.setItem('draft', JSON.stringify(draft));
+        }
+
+        function loadDraft() {
+            const draft = JSON.parse(localStorage.getItem('draft') || 'null');
+            if (!draft) return;
+
+            document.getElementById('dataColeta').value = draft.data || new Date().toISOString().split('T')[0];
+
+            draft.plants.forEach(plant => {
+                plantCount++;
+                createPlantCard(plant.t, plant.r, plant.fruits);
+            });
+
+            updatePlantCounter();
+        }
+
+        function clearDraft() {
+            localStorage.removeItem('draft');
+        }
+
+        function showAutoSaveIndicator() {
+            const indicator = document.getElementById('autoSaveIndicator');
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            dot.classList.add('saved');
+            text.textContent = 'Rascunho salvo';
+            indicator.style.display = 'block';
+            
+            setTimeout(() => {
+                indicator.style.display = 'none';
+                updateStatus();
+            }, 2000);
+        }
+
+        function addNewPlant() {
+            plantCount++;
+            createPlantCard('', '', [{ massa: '', estado: '' }]);
+            updatePlantCounter();
+        }
+
+        function createPlantCard(tValue = '', rValue = '', fruits = [{ massa: '', estado: '' }]) {
+            const plantsList = document.getElementById('plantsList');
+            const plantId = plantCount;
+            
+            const plantCard = document.createElement('div');
+            plantCard.className = 'plant-card expanded';
+            plantCard.dataset.plantId = plantId;
+            
+            const plantLabel = tValue && rValue ? `T${tValue}-R${rValue}` : 'Nova Planta';
+            const fruitCount = fruits.length;
+            
+            plantCard.innerHTML = `
+                <div class="plant-header" onclick="togglePlant(${plantId})">
+                    <div class="plant-title">
+                        <span class="plant-label">${plantLabel}</span>
+                        <span class="plant-badge">${fruitCount} fruto(s)</span>
+                    </div>
+                    <div class="plant-controls" onclick="event.stopPropagation()">
+                        <button class="toggle-btn" onclick="togglePlant(${plantId})">▼</button>
+                        <button class="remove-plant-btn" onclick="removePlant(${plantId})">✕</button>
+                    </div>
+                </div>
+                <div class="plant-content">
+                    <div class="form-group">
+                        <label>Identificação da Planta</label>
+                        <div class="plant-selector">
+                            <select class="t-select" onchange="updatePlantLabel(${plantId}); triggerAutoSave();">
+                                <option value="">T</option>
+                                ${[0,1,2,3,4,5,6].map(i => `<option value="${i}" ${tValue == i ? 'selected' : ''}>T${i}</option>`).join('')}
+                            </select>
+                            <span class="separator">-</span>
+                            <select class="r-select" onchange="updatePlantLabel(${plantId}); triggerAutoSave();">
+                                <option value="">R</option>
+                                ${[1,2,3,4,5,6].map(i => `<option value="${i}" ${rValue == i ? 'selected' : ''}>R${i}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Frutos Coletados</label>
+                        <div class="fruits-section fruits-container">
+                            ${fruits.map((fruit, idx) => createFruitHTML(plantId, idx + 1, fruit.massa, fruit.estado)).join('')}
+                        </div>
+                        <button type="button" class="add-fruit-btn" onclick="addFruitToPlant(${plantId})">+ Adicionar Fruto</button>
+                    </div>
+                </div>
+            `;
+            
+            plantsList.appendChild(plantCard);
+        }
+
+        function createFruitHTML(plantId, fruitNum, massa = '', estado = '') {
+            return `
+                <div class="fruit-item" data-fruit-id="${fruitNum}">
+                    <div class="fruit-header">
+                        <span class="fruit-number">Fruto ${fruitNum}</span>
+                        ${fruitNum > 1 ? `<button type="button" class="remove-btn" onclick="removeFruit(${plantId}, ${fruitNum})">Remover</button>` : ''}
+                    </div>
+                    <div class="fruit-fields">
+                        <div>
+                            <label>Massa (g)</label>
+                            <input type="number" data-type="massa" min="0" step="1" placeholder="Ex: 200" value="${massa}" oninput="triggerAutoSave()">
+                        </div>
+                        <div>
+                            <label>Estado</label>
+                            <select data-type="estado" onchange="triggerAutoSave()">
+                                <option value="">Selecione...</option>
+                                ${STATES.map(state => `<option value="${state}" ${estado === state ? 'selected' : ''}>${state}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addFruitToPlant(plantId) {
+            const card = document.querySelector(`[data-plant-id="${plantId}"]`);
+            const container = card.querySelector('.fruits-container');
+            const fruitCount = container.querySelectorAll('.fruit-item').length + 1;
+            
+            const fruitDiv = document.createElement('div');
+            fruitDiv.innerHTML = createFruitHTML(plantId, fruitCount);
+            container.appendChild(fruitDiv.firstElementChild);
+            
+            updatePlantBadge(plantId);
+            triggerAutoSave();
+        }
+
+        function removeFruit(plantId, fruitId) {
+            const card = document.querySelector(`[data-plant-id="${plantId}"]`);
+            const fruit = card.querySelector(`[data-fruit-id="${fruitId}"]`);
+            fruit.remove();
+            
+            // Renumerar frutos
+            const fruits = card.querySelectorAll('.fruit-item');
+            fruits.forEach((fruit, idx) => {
+                fruit.dataset.fruitId = idx + 1;
+                fruit.querySelector('.fruit-number').textContent = `Fruto ${idx + 1}`;
+            });
+            
+            updatePlantBadge(plantId);
+            triggerAutoSave();
+        }
+
+        function togglePlant(plantId) {
+            const card = document.querySelector(`[data-plant-id="${plantId}"]`);
+            const toggleBtn = card.querySelector('.toggle-btn');
+            
+            if (card.classList.contains('expanded')) {
+                card.classList.remove('expanded');
+                card.classList.add('collapsed');
+                toggleBtn.textContent = '▶';
+            } else {
+                card.classList.remove('collapsed');
+                card.classList.add('expanded');
+                toggleBtn.textContent = '▼';
+            }
+        }
+
+        function removePlant(plantId) {
+            if (confirm('Remover esta planta?')) {
+                document.querySelector(`[data-plant-id="${plantId}"]`).remove();
+                updatePlantCounter();
+                triggerAutoSave();
+            }
+        }
+
+        function updatePlantLabel(plantId) {
+            const card = document.querySelector(`[data-plant-id="${plantId}"]`);
+            const tValue = card.querySelector('.t-select').value;
+            const rValue = card.querySelector('.r-select').value;
+            const label = card.querySelector('.plant-label');
+            
+            if (tValue && rValue) {
+                label.textContent = `T${tValue}-R${rValue}`;
+            } else {
+                label.textContent = 'Nova Planta';
+            }
+        }
+
+        function updatePlantBadge(plantId) {
+            const card = document.querySelector(`[data-plant-id="${plantId}"]`);
+            const fruitCount = card.querySelectorAll('.fruit-item').length;
+            const badge = card.querySelector('.plant-badge');
+            badge.textContent = `${fruitCount} fruto(s)`;
+        }
+
+        function updatePlantCounter() {
+            const count = document.querySelectorAll('.plant-card').length;
+            document.getElementById('plantCounter').textContent = `${count} planta(s) adicionada(s)`;
+        }
+
+        function clearAll() {
+            if (confirm('Limpar todos os dados? Esta ação não pode ser desfeita.')) {
+                document.getElementById('plantsList').innerHTML = '';
+                plantCount = 0;
+                updatePlantCounter();
+                clearDraft();
+                showSuccess('🗑️ Dados limpos com sucesso');
+            }
+        }
+
+        async function saveAll() {
+            const plantCards = document.querySelectorAll('.plant-card');
+            
+            if (plantCards.length === 0) {
+                alert('Adicione pelo menos uma planta antes de salvar!');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Salvando...';
+
+            const data = document.getElementById('dataColeta').value;
+            let savedCount = 0;
+
+            for (const card of plantCards) {
+                const tValue = card.querySelector('.t-select').value;
+                const rValue = card.querySelector('.r-select').value;
+                
+                if (!tValue || !rValue) {
+                    continue;
+                }
+
+                const planta = `T${tValue}-R${rValue}`;
+                const frutos = [];
+                
+                const fruitItems = card.querySelectorAll('.fruit-item');
+                fruitItems.forEach((item, index) => {
+                    const massa = item.querySelector('[data-type="massa"]').value;
+                    const estado = item.querySelector('[data-type="estado"]').value;
+                    
+                    if (massa && estado) {
+                        frutos.push({
+                            numero: index + 1,
+                            massa: parseInt(massa),
+                            estado: estado
+                        });
+                    }
+                });
+
+                if (frutos.length > 0) {
+                    const payload = { data, planta, frutos };
+                    
+                    // Salvar localmente
+                    const pending = JSON.parse(localStorage.getItem('pendingData') || '[]');
+                    pending.push(payload);
+                    localStorage.setItem('pendingData', JSON.stringify(pending));
+                    
+                    // Tentar enviar se online
+                    if (isOnline) {
+                        try {
+                            await fetch(SHEETS_URL, {
+                                method: 'POST',
+                                mode: 'no-cors',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                            
+                            const updatedPending = JSON.parse(localStorage.getItem('pendingData') || '[]');
+                            updatedPending.pop();
+                            localStorage.setItem('pendingData', JSON.stringify(updatedPending));
+                        } catch (error) {
+                            console.error('Erro ao enviar:', error);
+                        }
+                    }
+                    
+                    savedCount++;
+                }
+            }
+
+            if (savedCount > 0) {
+                if (isOnline) {
+                    showSuccess(`✅ ${savedCount} planta(s) salva(s) e sincronizada(s)!`);
+                } else {
+                    showSuccess(`💾 ${savedCount} planta(s) salva(s)! Será sincronizada quando houver internet.`);
+                }
+                
+                updatePendingCount();
+                clearDraft();
+                
+                setTimeout(() => {
+                    document.getElementById('plantsList').innerHTML = '';
+                    plantCount = 0;
+                    updatePlantCounter();
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '💾 Salvar Tudo';
+                }, 2000);
+            } else {
+                alert('Preencha pelo menos uma planta com frutos válidos!');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '💾 Salvar Tudo';
+            }
+        }
+
+        function updatePendingCount() {
+            const pending = JSON.parse(localStorage.getItem('pendingData') || '[]');
+            const countDiv = document.getElementById('pendingCount');
+            
+            if (pending.length > 0) {
+                countDiv.style.display = 'block';
+                countDiv.textContent = `📦 ${pending.length} registro(s) aguardando sincronização`;
+            } else {
+                countDiv.style.display = 'none';
+            }
+        }
+
+        async function syncPendingData() {
+            if (!isOnline) return;
+            
+            const pending = JSON.parse(localStorage.getItem('pendingData') || '[]');
+            if (pending.length === 0) return;
+
+            console.log(`Sincronizando ${pending.length} registros...`);
+            
+            for (let i = 0; i < pending.length; i++) {
+                try {
+                    await fetch(SHEETS_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(pending[i])
+                    });
+                    
+                    pending.splice(i, 1);
+                    i--;
+                    localStorage.setItem('pendingData', JSON.stringify(pending));
+                    console.log('Registro sincronizado');
+                } catch (error) {
+                    console.error('Erro ao sincronizar:', error);
+                    break;
+                }
+            }
+            
+            updatePendingCount();
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
